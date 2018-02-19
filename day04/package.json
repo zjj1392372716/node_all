@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "browser-sync": "^2.23.6",
+    "marked": "^0.3.12"
+  }
+}

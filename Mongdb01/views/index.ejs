@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Bootstrap 101 Template</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        #chenggong,
+        #shibai {
+            display: none;
+        }
+
+        #liuyanCon {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>我的留言本</h1>
+        <form>
+            <div class="form-group">
+                <label for="exampleInputEmail1">姓名</label>
+                <input type="text" class="form-control" id="name" placeholder="name">
+            </div>
+            <div class="form-group">
+                <label for="exampleInputPassword1">留言</label>
+                <textarea class="form-control" rows="3" id="liuyan" name="liuyan"></textarea>
+            </div>
+            <button type="button" id="submit" class="btn btn-default">发布</button>
+            <div class="alert alert-success" role="alert" id="chenggong">
+                <a href="#" class="alert-link">表单已经成功提交</a>
+            </div>
+            <div class="alert alert-danger" role="alert" id="shibai">
+                <a href="#" class="alert-link">表单提交失败</a>
+            </div>
+        </form>
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                <% for(var i = 1 ; i <= pageamount ; i++){%>
+                    <li class="pages" data-page="<%=i%>">
+                        <a href="#"><%=i%></a>
+                    </li>
+                <%}%>
+            </ul>
+        </nav>
+        <div id="liuyanCon">
+
+        </div>
+    </div>
+
+    <script type="text/template" id="moban">
+        <div class="list-group">
+            <a href="#" class="list-group-item active">
+                <h4 class="list-group-item-heading">
+                    {{= name }}
+                </h4>
+                <p class="list-group-item-text">
+                    {{= liuyan }}
+                </p>
+                <p><a href="/shanchu?id={{=id}}" class="shanchu btn btn-danger">删除</a></p>
+            </a>
+        </div>
+    </script>
+    <script src="/js/jquery-1.11.3.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/Underscore.js"></script>
+    <script>
+        $(function () {
+            //Ajax提交表单
+            $("#submit").click(function () {
+                $("#shibai").hide();
+                $("#chenggong").hide();
+                $.post("/submit", {
+                    "name": $("#name").val(),
+                    "liuyan": $("#liuyan").val()
+                }, function (result) {
+                    console.log(result);
+                    if (result.result == -1) {
+                        $("#shibai").fadeIn();
+                    } else if (result.result == 1) {
+                        //提交成功
+                        $("#chenggong").fadeIn();
+                        //数据库真的存储了，但是当前页面无法显示。这是因为需要刷新
+                        //才能用ajax从/du中得到新的。所以我们先用一个假盒子凑出来。
+                        var compiled = _.template($("#moban").html());
+                        var html = compiled({
+                            liuyan: $("#liuyan").val(),
+                            name: $("#name").val()
+                        });
+                        $(html).insertBefore($("#liuyanCon"));
+                    }
+                });
+            });
+
+
+            $('.pages').on('click', function () {
+                var nowpage = parseInt($(this).attr('data-page'));
+                console.log(nowpage)
+                getData(nowpage);
+                $(this).addClass("active").siblings().removeClass("active");
+            })
+            // 默认是第一页
+            getData(1);
+        });
+
+        function getData(page) {
+            $.get("/du?page=" + (page - 1), function (result) {
+                var compiled = _.template($("#moban").html());
+                $("#liuyanCon").empty();
+                for (var i = 0; i < result.result.length; i++) {
+                    var html = compiled({
+                        name: result.result[i].name,
+                        liuyan: result.result[i].liuyan,
+                        id: result.result[i]._id
+                    });
+                    $('#liuyanCon').append($(html));
+                }
+
+            })
+        }
+    </script>
+</body>
+
+</html>
